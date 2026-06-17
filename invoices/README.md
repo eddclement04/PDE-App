@@ -4,12 +4,23 @@ This folder is for storing exported invoice PDFs or invoice images.
 
 ## Recommended naming format
 
-Use a clear file name so invoices stay organized:
+Use a clear file name that includes the **date the invoice was created**, the invoice number, client name, and project name.
+
+Recommended format:
 
 ```text
-PDE-INV-001-client-name-project-name.pdf
-PDE-INV-002-client-name-project-name.png
+YYYY-MM-DD_PDE-INV-001_client-name_project-name.pdf
+YYYY-MM-DD_PDE-INV-002_client-name_project-name.png
 ```
+
+Example:
+
+```text
+2026-06-17_PDE-INV-001_john-emmanuel_la-toc-apartments.pdf
+2026-06-17_PDE-INV-002_mary-joseph_residential-extension.png
+```
+
+Use the date format **YYYY-MM-DD** because it keeps files sorted properly by year, month, and day.
 
 ## Important
 
@@ -22,7 +33,7 @@ For now, use this workflow:
 1. Create the invoice in the app.
 2. Click **Preview**.
 3. Click **Print / Save PDF**.
-4. Save the PDF on your computer.
+4. Save the PDF on your computer using the recommended file name format.
 5. Upload the saved PDF or image into this `invoices` folder on GitHub.
 
 ## Future upgrade option
