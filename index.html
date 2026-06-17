@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDE Project & Invoice App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">PDE</div>
+        <div>
+          <h1>Perspective Designs & Estimates</h1>
+          <p>Project & Invoice Register</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="clients">Clients</button>
+        <button class="nav-btn" data-view="projects">Projects</button>
+        <button class="nav-btn" data-view="invoices">Invoices</button>
+        <button class="nav-btn" data-view="settings">Settings / Backup</button>
+      </nav>
+
+      <div class="sidebar-note">
+        <strong>Private local app</strong>
+        <span>Your data is saved in this browser only. Use Export Backup regularly.</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Small Business App</p>
+          <h2 id="viewTitle">Dashboard</h2>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn secondary" id="exportDataBtn">Export Backup</button>
+          <button class="btn primary" data-open-modal="invoiceModal">New Invoice</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="view active">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Total Clients</span>
+            <strong id="statClients">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Total Projects</span>
+            <strong id="statProjects">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Active Projects</span>
+            <strong id="statActiveProjects">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Unpaid Balance</span>
+            <strong id="statUnpaid">$0.00</strong>
+          </article>
+        </div>
+
+        <div class="grid two">
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Recent Projects</h3>
+              <button class="btn small" data-open-modal="projectModal">Add Project</button>
+            </div>
+            <div id="recentProjects" class="card-list empty-list">No projects added yet.</div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Recent Invoices</h3>
+              <button class="btn small" data-open-modal="invoiceModal">Add Invoice</button>
+            </div>
+            <div id="recentInvoices" class="card-list empty-list">No invoices added yet.</div>
+          </section>
+        </div>
+      </section>
+
+      <section id="clients" class="view">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Clients</h3>
+              <p>Store client contact information for projects and invoices.</p>
+            </div>
+            <button class="btn primary" data-open-modal="clientModal">Add Client</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Phone</th>
+                  <th>Email</th>
+                  <th>Address</th>
+                  <th class="actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clientsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="view">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Projects</h3>
+              <p>Track all project information, status, fees, balances, and notes.</p>
+            </div>
+            <button class="btn primary" data-open-modal="projectModal">Add Project</button>
+          </div>
+
+          <div class="filters">
+            <input id="projectSearch" type="search" placeholder="Search projects, clients, locations..." />
+            <select id="projectStatusFilter">
+              <option value="">All Statuses</option>
+              <option>Pending</option>
+              <option>Active</option>
+              <option>On Hold</option>
+              <option>Completed</option>
+              <option>Cancelled</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Client</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Fee</th>
+                  <th>Paid</th>
+                  <th>Balance</th>
+                  <th class="actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="projectsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="invoices" class="view">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Invoices</h3>
+              <p>Create invoices, record payments, and print/save as PDF.</p>
+            </div>
+            <button class="btn primary" data-open-modal="invoiceModal">Create Invoice</button>
+          </div>
+
+          <div class="filters">
+            <input id="invoiceSearch" type="search" placeholder="Search invoice number, client, project..." />
+            <select id="invoiceStatusFilter">
+              <option value="">All Payment Statuses</option>
+              <option>Unpaid</option>
+              <option>Part Paid</option>
+              <option>Paid</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice No.</th>
+                  <th>Client</th>
+                  <th>Project</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Paid</th>
+                  <th>Balance</th>
+                  <th>Status</th>
+                  <th class="actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="invoicesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="view">
+        <div class="grid two">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Business Settings</h3>
+                <p>These details appear on your invoices.</p>
+              </div>
+            </div>
+            <form id="settingsForm" class="form-grid">
+              <label>
+                Business Name
+                <input name="businessName" required />
+              </label>
+              <label>
+                Phone
+                <input name="businessPhone" />
+              </label>
+              <label>
+                Email
+                <input name="businessEmail" type="email" />
+              </label>
+              <label>
+                Address
+                <textarea name="businessAddress" rows="3"></textarea>
+              </label>
+              <label>
+                Payment Details
+                <textarea name="paymentDetails" rows="4" placeholder="Bank name, account number, payment instructions..."></textarea>
+              </label>
+              <label>
+                Invoice Prefix
+                <input name="invoicePrefix" placeholder="PDE-INV" />
+              </label>
+              <button class="btn primary" type="submit">Save Settings</button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Backup & Restore</h3>
+                <p>Export your data often, especially before changing devices.</p>
+              </div>
+            </div>
+            <div class="backup-box">
+              <button class="btn primary" id="exportDataBtn2">Export Backup</button>
+              <label class="file-import">
+                Import Backup
+                <input id="importFile" type="file" accept="application/json" />
+              </label>
+              <button class="btn danger" id="clearDataBtn">Clear All Data</button>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="clientModal" class="modal">
+    <form id="clientForm" method="dialog">
+      <div class="modal-header">
+        <h3 id="clientModalTitle">Add Client</h3>
+        <button type="button" class="icon-btn close-modal">×</button>
+      </div>
+      <input type="hidden" name="id" />
+      <div class="form-grid">
+        <label>
+          Client Name
+          <input name="name" required />
+        </label>
+        <label>
+          Phone
+          <input name="phone" />
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" />
+        </label>
+        <label>
+          Address
+          <textarea name="address" rows="3"></textarea>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary close-modal">Cancel</button>
+        <button type="submit" class="btn primary">Save Client</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="projectModal" class="modal">
+    <form id="projectForm" method="dialog">
+      <div class="modal-header">
+        <h3 id="projectModalTitle">Add Project</h3>
+        <button type="button" class="icon-btn close-modal">×</button>
+      </div>
+      <input type="hidden" name="id" />
+      <div class="form-grid">
+        <label>
+          Project Name
+          <input name="name" required />
+        </label>
+        <label>
+          Client
+          <select name="clientId" id="projectClientSelect"></select>
+        </label>
+        <label>
+          Location
+          <input name="location" />
+        </label>
+        <label>
+          Service Type
+          <select name="serviceType">
+            <option>Architectural Drafting</option>
+            <option>Building Design</option>
+            <option>Quantity Surveying</option>
+            <option>Cost Estimation</option>
+            <option>Project Management</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>
+          Status
+          <select name="status">
+            <option>Pending</option>
+            <option>Active</option>
+            <option>On Hold</option>
+            <option>Completed</option>
+            <option>Cancelled</option>
+          </select>
+        </label>
+        <label>
+          Start Date
+          <input name="startDate" type="date" />
+        </label>
+        <label>
+          Deadline
+          <input name="deadline" type="date" />
+        </label>
+        <label>
+          Quoted Fee (XCD)
+          <input name="fee" type="number" min="0" step="0.01" />
+        </label>
+        <label>
+          Amount Paid (XCD)
+          <input name="paid" type="number" min="0" step="0.01" />
+        </label>
+        <label class="full">
+          Notes
+          <textarea name="notes" rows="4"></textarea>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary close-modal">Cancel</button>
+        <button type="submit" class="btn primary">Save Project</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="invoiceModal" class="modal wide">
+    <form id="invoiceForm" method="dialog">
+      <div class="modal-header">
+        <h3 id="invoiceModalTitle">Create Invoice</h3>
+        <button type="button" class="icon-btn close-modal">×</button>
+      </div>
+      <input type="hidden" name="id" />
+
+      <div class="form-grid">
+        <label>
+          Invoice No.
+          <input name="invoiceNo" id="invoiceNo" required />
+        </label>
+        <label>
+          Date
+          <input name="date" type="date" required />
+        </label>
+        <label>
+          Due Date
+          <input name="dueDate" type="date" />
+        </label>
+        <label>
+          Client
+          <select name="clientId" id="invoiceClientSelect" required></select>
+        </label>
+        <label>
+          Project
+          <select name="projectId" id="invoiceProjectSelect"></select>
+        </label>
+        <label>
+          Amount Paid (XCD)
+          <input name="paid" type="number" min="0" step="0.01" value="0" />
+        </label>
+      </div>
+
+      <div class="line-items-section">
+        <div class="line-items-header">
+          <h4>Invoice Line Items</h4>
+          <button type="button" class="btn small" id="addLineItemBtn">Add Item</button>
+        </div>
+        <div id="lineItems"></div>
+      </div>
+
+      <label class="full">
+        Notes
+        <textarea name="notes" rows="3" placeholder="Thank you for your business."></textarea>
+      </label>
+
+      <div class="invoice-summary-box">
+        <div><span>Subtotal</span><strong id="invoiceSubtotal">$0.00</strong></div>
+        <div><span>Paid</span><strong id="invoicePaid">$0.00</strong></div>
+        <div><span>Balance Due</span><strong id="invoiceBalance">$0.00</strong></div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn secondary close-modal">Cancel</button>
+        <button type="submit" class="btn primary">Save Invoice</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="invoicePreviewModal" class="modal invoice-preview-modal">
+    <div class="modal-header no-print">
+      <h3>Invoice Preview</h3>
+      <button type="button" class="icon-btn close-modal">×</button>
+    </div>
+    <div id="invoicePreview" class="invoice-paper"></div>
+    <div class="modal-actions no-print">
+      <button type="button" class="btn secondary close-modal">Close</button>
+      <button type="button" class="btn primary" id="printInvoiceBtn">Print / Save PDF</button>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
