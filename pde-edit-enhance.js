@@ -18,7 +18,11 @@
       btn.dataset.cancelEdit = formId;
       btn.textContent = 'Cancel Edit';
       btn.style.display = 'none';
-      btn.addEventListener('click', function(){ clearFn(); setMode(formId, false, label); });
+      btn.addEventListener('click', function(){
+        clearFn();
+        setMode(formId, false, label);
+        hideNotice(formId);
+      });
       actions.appendChild(btn);
     }
     return btn;
@@ -59,8 +63,18 @@
   }
 
   function setup(){
-    ensureCancelButton('costForm', function(){ if(typeof window.newCost === 'function') window.newCost(); hideNotice('costForm'); }, 'Job Cost');
-    ensureCancelButton('invoiceForm', function(){ if(typeof window.newInvoice === 'function') window.newInvoice(); hideNotice('invoiceForm'); }, 'Invoice');
+    if(window.__pdeEditEnhanceReady) return;
+    window.__pdeEditEnhanceReady = true;
+
+    ensureCancelButton('costForm', function(){
+      if(typeof window.newCost === 'function') window.newCost();
+      hideNotice('costForm');
+    }, 'Job Cost');
+
+    ensureCancelButton('invoiceForm', function(){
+      if(typeof window.newInvoice === 'function') window.newInvoice();
+      hideNotice('invoiceForm');
+    }, 'Invoice');
 
     const oldEditCost = window.editCost;
     if(typeof oldEditCost === 'function'){
@@ -88,6 +102,7 @@
         setTimeout(function(){ setMode('costForm', false, 'Job Cost'); hideNotice('costForm'); }, 300);
       }, true);
     }
+
     const invoiceForm = $('invoiceForm');
     if(invoiceForm){
       invoiceForm.addEventListener('submit', function(){
@@ -96,10 +111,19 @@
     }
 
     const clearCost = $('clearCostBtn');
-    if(clearCost) clearCost.addEventListener('click', function(){ setTimeout(function(){ setMode('costForm', false, 'Job Cost'); hideNotice('costForm'); }, 50); });
+    if(clearCost) clearCost.addEventListener('click', function(){
+      setTimeout(function(){ setMode('costForm', false, 'Job Cost'); hideNotice('costForm'); }, 50);
+    });
+
     const clearInvoice = $('clearInvoiceBtn');
-    if(clearInvoice) clearInvoice.addEventListener('click', function(){ setTimeout(function(){ setMode('invoiceForm', false, 'Invoice'); hideNotice('invoiceForm'); }, 50); });
+    if(clearInvoice) clearInvoice.addEventListener('click', function(){
+      setTimeout(function(){ setMode('invoiceForm', false, 'Invoice'); hideNotice('invoiceForm'); }, 50);
+    });
   }
 
-  window.addEventListener('load', setup);
+  if(document.readyState === 'loading'){
+    window.addEventListener('load', setup);
+  }else{
+    setup();
+  }
 })();
