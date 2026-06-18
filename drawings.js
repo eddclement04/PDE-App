@@ -1,95 +1,76 @@
-const STRUCTURAL_DRAWING_OPTIONS = [
-  'Foundation Plan and Details',
-  'Column Details',
-  'Stair Plan and Details',
-  'First Floor Reinforcement Layout and Sections',
-  'First Floor beam sections and Details',
-  'Roof Beam sections and details',
-  'Roof Plan and Details',
-  'Structural Details'
+const PLUMBING_DRAWING_OPTIONS = [
+  'Plumbing Isometrics',
+  'Ground Floor Plumbing Layout',
+  'First Floor Plumbing Layout'
 ];
 
-function safeSlug(value) {
-  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
-
-function injectStructuralDrawingOptions() {
+function injectPlumbingDrawingOptions() {
   document.querySelectorAll('.drawing-section').forEach(section => {
     const heading = section.querySelector('strong')?.textContent?.trim();
     const placeholder = section.querySelector('.drawing-options-placeholder');
-    if (heading !== 'Structural' || !placeholder || placeholder.dataset.structuralReady === 'true') return;
+    if (heading !== 'Plumbing' || !placeholder || placeholder.dataset.plumbingReady === 'true') return;
 
     const sectionKey = section.closest('[data-project-type-section]')?.dataset.projectTypeSection || 'project-type';
-    const customId = `custom-structural-${safeSlug(sectionKey)}`;
+    const customId = `custom-plumbing-${slug(sectionKey)}`;
 
-    placeholder.innerHTML = STRUCTURAL_DRAWING_OPTIONS.map(option => `
+    placeholder.innerHTML = PLUMBING_DRAWING_OPTIONS.map(option => `
       <label class="drawing-check" style="display:flex;gap:8px;align-items:center;font-weight:600;color:#1f2937;margin:6px 0;">
-        <input type="checkbox" style="width:auto;" data-drawing-category="structural" value="${option}">
-        <span>${option}</span>
+        <input type="checkbox" style="width:auto;" data-drawing-category="plumbing" value="${esc(option)}">
+        <span>${esc(option)}</span>
       </label>
     `).join('') + `
-      <div class="drawing-custom" data-custom-category="structural" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;">
-        <strong style="font-size:13px;margin-bottom:8px;">Custom Structural Drawings</strong>
+      <div class="drawing-custom" data-custom-category="plumbing" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;">
+        <strong style="font-size:13px;margin-bottom:8px;">Custom Plumbing Drawings</strong>
         <div class="custom-drawing-list" id="${customId}"></div>
-        <button type="button" class="btn small plus-row" data-add-custom-structural="${customId}">+ Add Custom</button>
+        <button type="button" class="btn small plus-row" data-add-custom-drawing="${customId}">+ Add Custom</button>
       </div>
     `;
-    placeholder.dataset.structuralReady = 'true';
+    placeholder.dataset.plumbingReady = 'true';
   });
 }
 
-function addCustomStructuralDrawing(containerId, value = '') {
-  const box = document.getElementById(containerId);
-  if (!box) return;
-  const row = document.createElement('div');
-  row.className = 'multi-row custom-drawing-row';
-  row.innerHTML = `<input type="text" data-custom-drawing-input="structural" value="${esc(value)}" placeholder="Custom structural drawing name"><button type="button" class="btn danger">−</button>`;
-  row.querySelector('button').onclick = () => row.remove();
-  box.append(row);
-}
-
-const previousReadDrawingSelections = readDrawingSelections;
+const previousReadDrawingSelectionsForPlumbing = readDrawingSelections;
 readDrawingSelections = function () {
-  const drawings = previousReadDrawingSelections ? previousReadDrawingSelections() : { site: [], architectural: [], architecturalCustom: [] };
+  const drawings = previousReadDrawingSelectionsForPlumbing ? previousReadDrawingSelectionsForPlumbing() : {};
   const section = activeTypeSection();
-  drawings.structural = [];
-  drawings.structuralCustom = [];
+  drawings.plumbing = [];
+  drawings.plumbingCustom = [];
   if (!section) return drawings;
-  section.querySelectorAll('[data-drawing-category="structural"]:checked').forEach(input => drawings.structural.push(input.value));
-  section.querySelectorAll('[data-custom-drawing-input="structural"]').forEach(input => {
+  section.querySelectorAll('[data-drawing-category="plumbing"]:checked').forEach(input => drawings.plumbing.push(input.value));
+  section.querySelectorAll('[data-custom-drawing-input="plumbing"]').forEach(input => {
     const value = input.value.trim();
-    if (value) drawings.structuralCustom.push(value);
+    if (value) drawings.plumbingCustom.push(value);
   });
   return drawings;
 };
 
-const previousFillDrawingSelections = fillDrawingSelections;
+const previousFillDrawingSelectionsForPlumbing = fillDrawingSelections;
 fillDrawingSelections = function (drawings = {}) {
-  if (previousFillDrawingSelections) previousFillDrawingSelections(drawings);
-  const selectedStructural = asArray(drawings.structural);
-  document.querySelectorAll('[data-drawing-category="structural"]').forEach(input => {
-    input.checked = selectedStructural.includes(input.value);
+  if (previousFillDrawingSelectionsForPlumbing) previousFillDrawingSelectionsForPlumbing(drawings);
+  const selectedPlumbing = asArray(drawings.plumbing);
+  document.querySelectorAll('[data-drawing-category="plumbing"]').forEach(input => {
+    input.checked = selectedPlumbing.includes(input.value);
   });
   const section = activeTypeSection();
   if (section) {
-    const customBox = section.querySelector('[data-custom-category="structural"] .custom-drawing-list');
-    asArray(drawings.structuralCustom).forEach(value => addCustomStructuralDrawing(customBox?.id, value));
+    const customBox = section.querySelector('[data-custom-category="plumbing"] .custom-drawing-list');
+    asArray(drawings.plumbingCustom).forEach(value => addCustomDrawing(customBox?.id, value));
   }
 };
 
-const previousRenderCosts = renderCosts;
 renderCosts = function () {
   const table = document.getElementById('costsTable');
-  if (!table) return previousRenderCosts();
+  if (!table) return;
   table.innerHTML = state.costs.map(c => {
     const site = asArray(c.drawings?.site).join(', ');
     const arch = asArray(c.drawings?.architectural).concat(asArray(c.drawings?.architecturalCustom)).join(', ');
     const structural = asArray(c.drawings?.structural).concat(asArray(c.drawings?.structuralCustom)).join(', ');
-    return `<tr><td>${esc(c.date || '')}</td><td><b>${esc(c.title || '')}</b>${site ? `<br><span class="muted">Site drawings: ${esc(site)}</span>` : ''}${arch ? `<br><span class="muted">Architectural drawings: ${esc(arch)}</span>` : ''}${structural ? `<br><span class="muted">Structural drawings: ${esc(structural)}</span>` : ''}</td><td>${esc(client(c.clientId).name || '')}</td><td>${esc(project(c.projectId).name || '')}</td><td><b>${money(costTotal(c))}</b></td><td><div class="row-actions"><button class="btn small secondary" onclick="editCost('${c.id}')">Edit</button><button class="btn small" onclick="invoiceFromCost('${c.id}')">Invoice</button><button class="btn small danger" onclick="deleteCost('${c.id}')">Delete</button></div></td></tr>`;
+    const electrical = asArray(c.drawings?.electrical).concat(asArray(c.drawings?.electricalCustom)).join(', ');
+    const plumbing = asArray(c.drawings?.plumbing).concat(asArray(c.drawings?.plumbingCustom)).join(', ');
+    return `<tr><td>${esc(c.date || '')}</td><td><b>${esc(c.title || '')}</b>${site ? `<br><span class="muted">Site drawings: ${esc(site)}</span>` : ''}${arch ? `<br><span class="muted">Architectural drawings: ${esc(arch)}</span>` : ''}${structural ? `<br><span class="muted">Structural drawings: ${esc(structural)}</span>` : ''}${electrical ? `<br><span class="muted">Electrical drawings: ${esc(electrical)}</span>` : ''}${plumbing ? `<br><span class="muted">Plumbing drawings: ${esc(plumbing)}</span>` : ''}</td><td>${esc(client(c.clientId).name || '')}</td><td>${esc(project(c.projectId).name || '')}</td><td><b>${money(costTotal(c))}</b></td><td><div class="row-actions"><button class="btn small secondary" onclick="editCost('${c.id}')">Edit</button><button class="btn small" onclick="invoiceFromCost('${c.id}')">Invoice</button><button class="btn small danger" onclick="deleteCost('${c.id}')">Delete</button></div></td></tr>`;
   }).join('') || '<tr><td colspan="6">No job costs added yet.</td></tr>';
 };
 
-const previousInvoiceFromCost = invoiceFromCost;
 invoiceFromCost = function (id) {
   const c = jobCost(id);
   const f = document.getElementById('invoiceForm');
@@ -100,17 +81,14 @@ invoiceFromCost = function (id) {
   document.getElementById('lineItems').innerHTML = '';
   const selectedDrawings = asArray(c.drawings?.site)
     .concat(asArray(c.drawings?.architectural), asArray(c.drawings?.architecturalCustom))
-    .concat(asArray(c.drawings?.structural), asArray(c.drawings?.structuralCustom));
+    .concat(asArray(c.drawings?.structural), asArray(c.drawings?.structuralCustom))
+    .concat(asArray(c.drawings?.electrical), asArray(c.drawings?.electricalCustom))
+    .concat(asArray(c.drawings?.plumbing), asArray(c.drawings?.plumbingCustom));
   selectedDrawings.forEach(d => addLineItem({ description: d, qty: 1, rate: 0 }));
   (c.items || []).forEach(item => addLineItem({ description: item.description, qty: item.qty, rate: item.rate }));
   if (!selectedDrawings.length && !(c.items || []).length) addLineItem();
   showView('invoices');
 };
 
-document.addEventListener('click', event => {
-  const custom = event.target.closest('[data-add-custom-structural]');
-  if (custom) addCustomStructuralDrawing(custom.dataset.addCustomStructural);
-});
-
-injectStructuralDrawingOptions();
+injectPlumbingDrawingOptions();
 renderCosts();
