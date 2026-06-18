@@ -14,6 +14,7 @@
       <button class="nav-btn active" data-view="dashboard">Dashboard</button>
       <button class="nav-btn" data-view="clients">Clients</button>
       <button class="nav-btn" data-view="projects">Projects</button>
+      <button class="nav-btn" data-view="costs">Job Costs</button>
       <button class="nav-btn" data-view="invoices">Invoices</button>
       <button class="nav-btn" data-view="payments">Payments</button>
       <button class="nav-btn" data-view="settings">Settings / Backup</button>
@@ -22,10 +23,10 @@
   </aside>
 
   <main class="main">
-    <header class="topbar"><div><p class="eyebrow">Small Business App</p><h2 id="viewTitle">Dashboard</h2></div><div class="topbar-actions"><button class="btn secondary" id="exportTop">Export Backup</button><button class="btn" data-go="payments">New Payment</button><button class="btn primary" data-go="invoices">New Invoice</button></div></header>
+    <header class="topbar"><div><p class="eyebrow">Small Business App</p><h2 id="viewTitle">Dashboard</h2></div><div class="topbar-actions"><button class="btn secondary" id="exportTop">Export Backup</button><button class="btn" data-go="costs">New Job Cost</button><button class="btn" data-go="payments">New Payment</button><button class="btn primary" data-go="invoices">New Invoice</button></div></header>
 
     <section id="dashboard" class="view active">
-      <div class="stats-grid"><article class="stat-card"><span>Total Clients</span><strong id="statClients">0</strong></article><article class="stat-card"><span>Total Projects</span><strong id="statProjects">0</strong></article><article class="stat-card"><span>Active Projects</span><strong id="statActive">0</strong></article><article class="stat-card"><span>Payments Received</span><strong id="statPayments">$0.00</strong></article><article class="stat-card"><span>Unpaid Invoices</span><strong id="statUnpaid">$0.00</strong></article></div>
+      <div class="stats-grid"><article class="stat-card"><span>Total Clients</span><strong id="statClients">0</strong></article><article class="stat-card"><span>Total Projects</span><strong id="statProjects">0</strong></article><article class="stat-card"><span>Job Cost Total</span><strong id="statCosts">$0.00</strong></article><article class="stat-card"><span>Payments Received</span><strong id="statPayments">$0.00</strong></article><article class="stat-card"><span>Unpaid Invoices</span><strong id="statUnpaid">$0.00</strong></article></div>
       <div class="grid two"><section class="panel"><div class="panel-header"><div><h3>Recent Projects</h3><p>Latest project records.</p></div></div><div id="recentProjects"></div></section><section class="panel"><div class="panel-header"><div><h3>Recent Invoices</h3><p>Latest invoice records.</p></div></div><div id="recentInvoices"></div></section></div>
     </section>
 
@@ -37,6 +38,11 @@
     <section id="projects" class="view">
       <section class="panel"><div class="panel-header"><div><h3>Projects</h3><p>Record project name, client, site address, status, deadline, and notes.</p></div></div><form id="projectForm" class="form-grid"><input type="hidden" name="id"><label>Project Name<input name="name" required></label><label>Client<select name="clientId" id="projectClientSelect"></select></label><label>Status<select name="status"><option>Pending</option><option>Active</option><option>On Hold</option><option>Completed</option><option>Cancelled</option></select></label><label>Deadline<input name="deadline" type="date"></label><label>Site Address 1<input name="siteAddress1" placeholder="Project site / community"></label><label>Site District<input name="siteDistrict" placeholder="District"></label><label>Site Country<input name="siteCountry" placeholder="Country"></label><label class="full">Notes<textarea name="notes" rows="3"></textarea></label><div class="actions full"><button class="btn primary">Save Project</button><button type="button" class="btn secondary" id="clearProjectBtn">Clear</button></div></form></section>
       <section class="panel table-wrap"><table><thead><tr><th>Project</th><th>Client</th><th>Site Address</th><th>Status</th><th>Deadline</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="projectsTable"></tbody></table></section>
+    </section>
+
+    <section id="costs" class="view">
+      <section class="panel"><div class="panel-header"><div><h3>Job Costs</h3><p>Develop costs based on jobs/tasks to be done before creating an invoice.</p></div></div><form id="costForm" class="form-grid"><input type="hidden" name="id"><label>Cost Title / Scope<input name="title" required placeholder="e.g. Proposed Residence Drawings"></label><label>Date<input name="date" type="date" required></label><label>Client<select name="clientId" id="costClientSelect"></select></label><label>Project<select name="projectId" id="costProjectSelect"></select></label><label class="full">Notes<textarea name="notes" rows="2" placeholder="Assumptions, exclusions, or special notes"></textarea></label><div class="full"><div class="line-items-header"><h4>Jobs / Tasks To Be Done</h4><button type="button" class="btn small" id="addCostItemBtn">Add Job</button></div><div id="costItems"></div></div><div class="actions full"><button class="btn primary">Save Job Cost</button><button type="button" class="btn secondary" id="clearCostBtn">Clear</button></div></form></section>
+      <section class="panel table-wrap"><table><thead><tr><th>Date</th><th>Title / Scope</th><th>Client</th><th>Project</th><th>Total Cost</th><th>Actions</th></tr></thead><tbody id="costsTable"></tbody></table></section>
     </section>
 
     <section id="invoices" class="view">
