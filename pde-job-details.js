@@ -27,6 +27,7 @@
     const state = readState();
     const costs = state.costs || [];
     const rows = costs.map(c=>({
+      id:c.id || '',
       date:c.date || '',
       title:c.title || 'Untitled job cost',
       client:clientName(state,c.clientId),
@@ -79,7 +80,7 @@
           <td>${safe(row.client)}</td>
           <td>${safe(row.project)}</td>
           <td><b>${money(row.total)}</b></td>
-          <td><button class="btn small secondary" onclick="editCost('${row.id||''}')">Edit</button></td>
+          <td><button class="btn small secondary" onclick="editCost('${row.id}')">Edit</button></td>
         </tr>`).join('');
     }
   }
