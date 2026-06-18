@@ -79,7 +79,7 @@
           <td>${safe(row.client)}</td>
           <td>${safe(row.project)}</td>
           <td><b>${money(row.total)}</b></td>
-          <td><span class="muted">Saved record</span></td>
+          <td><button class="btn small secondary" onclick="editCost('${row.id||''}')">Edit</button></td>
         </tr>`).join('');
     }
   }
@@ -87,6 +87,9 @@
   window.addEventListener('load',()=>{
     renderJobCostDetails();
     setInterval(renderJobCostDetails,3000);
+    const s=document.createElement('script');
+    s.src='pde-edit-enhance.js?v=1';
+    document.body.appendChild(s);
   });
   window.addEventListener('storage',renderJobCostDetails);
   document.addEventListener('submit',()=>setTimeout(renderJobCostDetails,500),true);
