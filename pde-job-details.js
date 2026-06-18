@@ -1,15 +1,21 @@
-// PDE app patch: show exact job cost records behind Dashboard Total Job Costs
+// PDE app patch: dashboard job cost category totals + edit helper loader
 (function(){
   const APP_KEY = 'pde_project_invoice_app_v1';
   const money = n => new Intl.NumberFormat('en-LC',{style:'currency',currency:'XCD'}).format(Number(n||0));
   const safe = v => String(v ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const CAT_LABEL = {site:'Site',architectural:'Architectural',structural:'Structural',electrical:'Electrical',plumbing:'Plumbing',hvac:'HVAC',other:'Other'};
+  const CAT_ORDER = ['site','architectural','structural','electrical','plumbing','hvac','other'];
 
   function readState(){
     try{return JSON.parse(localStorage.getItem(APP_KEY)) || {}}catch(e){return {}}
   }
 
+  function itemValue(item){
+    return Number(item.qty || 0) * Number(item.rate || 0);
+  }
+
   function itemTotal(items){
-    return (items || []).reduce((sum,item)=>sum + Number(item.qty || 0) * Number(item.rate || 0),0);
+    return (items || []).reduce((sum,item)=>sum + itemValue(item),0);
   }
 
   function clientName(state,id){
@@ -18,6 +24,15 @@
 
   function projectName(state,id){
     return (state.projects || []).find(p=>p.id===id)?.name || 'No project';
+  }
+
+  function categoryTotals(items){
+    const totals = {};
+    (items || []).forEach(item=>{
+      const cat = item.drawingCat || 'other';
+      totals[cat] = (totals[cat] || 0) + itemValue(item);
+    });
+    return CAT_ORDER.filter(cat=>totals[cat]).map(cat=>({label:CAT_LABEL[cat] || cat,total:totals[cat]}));
   }
 
   function renderJobCostDetails(){
@@ -33,7 +48,7 @@
       client:clientName(state,c.clientId),
       project:projectName(state,c.projectId),
       total:itemTotal(c.items),
-      items:c.items || []
+      categories:categoryTotals(c.items || [])
     })).sort((a,b)=>b.total-a.total);
 
     let panel = document.getElementById('dashboardJobCostDetails');
@@ -50,12 +65,12 @@
       <div class="panel-header">
         <div>
           <h3>Job Cost Details</h3>
-          <p>This is the breakdown behind the Dashboard Total Job Costs: <strong>${money(grandTotal)}</strong></p>
+          <p>Dashboard summary by drawing heading/category: <strong>${money(grandTotal)}</strong></p>
         </div>
       </div>
       <table>
         <thead>
-          <tr><th>Date</th><th>Cost Title / Scope</th><th>Client</th><th>Project</th><th>Line Items</th><th>Total Cost</th></tr>
+          <tr><th>Date</th><th>Cost Title / Scope</th><th>Client</th><th>Project</th><th>Heading Totals</th><th>Total Cost</th></tr>
         </thead>
         <tbody>
           ${rows.length ? rows.map(row=>`
@@ -64,7 +79,7 @@
               <td><b>${safe(row.title)}</b></td>
               <td>${safe(row.client)}</td>
               <td>${safe(row.project)}</td>
-              <td>${row.items.length ? row.items.map(i=>`${safe(i.description || 'Item')} — ${money(Number(i.qty || 0) * Number(i.rate || 0))}`).join('<br>') : '-'}</td>
+              <td>${row.categories.length ? row.categories.map(c=>`<b>${safe(c.label)} Total</b> — ${money(c.total)}`).join('<br>') : '<b>Other Total</b> — '+money(row.total)}</td>
               <td><b>${money(row.total)}</b></td>
             </tr>`).join('') : '<tr><td colspan="6">No saved job cost records found.</td></tr>'}
         </tbody>
