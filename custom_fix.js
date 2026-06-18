@@ -20,6 +20,88 @@ document.addEventListener('click', function (event) {
     else fn();
   }
 
+  function openView(viewName) {
+    if (typeof window.showView === 'function') {
+      window.showView(viewName);
+      return;
+    }
+    var button = document.querySelector('[data-view="' + viewName + '"]');
+    if (button) button.click();
+  }
+
+  function addOption(select, value, label) {
+    if (!select || select.querySelector('option[value="' + value + '"]')) return;
+    var option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  }
+
+  function addQuickCreateOptions() {
+    document.querySelectorAll('select[name="clientId"]').forEach(function (select) {
+      addOption(select, '__add_new_client', '+ Add New Client');
+    });
+
+    document.querySelectorAll('select[name="projectId"]').forEach(function (select) {
+      addOption(select, '__add_new_project', '+ Add New Project');
+    });
+  }
+
+  function openNewClient() {
+    openView('clients');
+    var clearButton = document.getElementById('clearClientBtn');
+    if (clearButton) clearButton.click();
+    setTimeout(function () {
+      var nameInput = document.querySelector('#clientForm [name="name"]');
+      if (nameInput) nameInput.focus();
+    }, 80);
+  }
+
+  function openNewProject(sourceSelect) {
+    var sourceForm = sourceSelect ? sourceSelect.closest('form') : null;
+    var selectedClient = sourceForm && sourceForm.elements.clientId ? sourceForm.elements.clientId.value : '';
+    openView('projects');
+    var clearButton = document.getElementById('clearProjectBtn');
+    if (clearButton) clearButton.click();
+    setTimeout(function () {
+      var projectClient = document.getElementById('projectClientSelect');
+      if (projectClient && selectedClient && selectedClient.indexOf('__') !== 0) projectClient.value = selectedClient;
+      var nameInput = document.querySelector('#projectForm [name="name"]');
+      if (nameInput) nameInput.focus();
+    }, 80);
+  }
+
+  ready(function () {
+    addQuickCreateOptions();
+    document.addEventListener('focusin', function (event) {
+      if (event.target.matches && event.target.matches('select[name="clientId"], select[name="projectId"]')) addQuickCreateOptions();
+    });
+    document.addEventListener('click', function () {
+      setTimeout(addQuickCreateOptions, 50);
+    });
+    document.addEventListener('change', function (event) {
+      var select = event.target;
+      if (!select.matches || !select.matches('select[name="clientId"], select[name="projectId"]')) return;
+      if (select.value === '__add_new_client') {
+        select.value = '';
+        openNewClient();
+      }
+      if (select.value === '__add_new_project') {
+        select.value = '';
+        openNewProject(select);
+      }
+      setTimeout(addQuickCreateOptions, 50);
+    }, true);
+    setInterval(addQuickCreateOptions, 1200);
+  });
+})();
+
+(function () {
+  function ready(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
   ready(function () {
     if (document.querySelector('.pde-menu-toggle')) return;
 
