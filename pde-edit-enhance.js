@@ -1,4 +1,4 @@
-// PDE edit workflow helper for Job Costs and Invoices
+// PDE edit workflow helper for Job Costs and Invoices + confirmation and undo
 (function(){
   const APP_KEY = 'pde_project_invoice_app_v1';
   const DRAFT_KEY = 'pde_project_invoice_app_form_drafts_v1';
@@ -49,6 +49,104 @@
   }
   function hideNotice(formId){ const note = $(formId)?.querySelector('.editing-notice'); if(note) note.hidden = true; }
   function scrollToForm(formId){ const form=$(formId); if(form) form.scrollIntoView({behavior:'smooth', block:'start'}); }
+
+  function injectEditUiStyle(){
+    if($('pdeEditConfirmStyle')) return;
+    const style = document.createElement('style');
+    style.id = 'pdeEditConfirmStyle';
+    style.textContent = `
+      .pde-edit-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9998;display:grid;place-items:center;padding:18px;}
+      .pde-edit-modal{width:min(460px,100%);background:#fff;border:1px solid #dbe5f4;border-radius:22px;box-shadow:0 28px 80px rgba(15,23,42,.22);padding:26px;}
+      .pde-edit-modal h3{margin:0 0 8px;color:#111a33;font-size:24px;font-weight:950;letter-spacing:-.03em;}
+      .pde-edit-modal p{margin:0 0 18px;color:#64748b;line-height:1.55;}
+      .pde-edit-modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+      .pde-undo-toast{position:fixed;right:22px;bottom:22px;z-index:9999;max-width:430px;background:#111827;color:#fff;border-radius:18px;padding:16px 16px 14px;box-shadow:0 24px 70px rgba(15,23,42,.3);display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;}
+      .pde-undo-toast strong{display:block;font-size:14px;margin-bottom:3px;}
+      .pde-undo-toast span{display:block;color:#cbd5e1;font-size:12px;line-height:1.35;}
+      .pde-undo-toast button{border:1px solid #93c5fd;background:#2563eb;color:#fff;border-radius:10px;padding:10px 14px;font-weight:950;text-transform:uppercase;font-size:12px;cursor:pointer;}
+      .pde-undo-timer{grid-column:1/-1;height:4px;background:#334155;border-radius:99px;overflow:hidden;}
+      .pde-undo-timer i{display:block;height:100%;width:100%;background:#60a5fa;animation:pdeUndoShrink 10s linear forwards;}
+      @keyframes pdeUndoShrink{from{width:100%;}to{width:0%;}}
+      @media(max-width:760px){.pde-undo-toast{left:16px;right:16px;bottom:16px}.pde-edit-modal-actions .btn{flex:1 1 140px;}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function showConfirmModal(label){
+    injectEditUiStyle();
+    return new Promise(resolve=>{
+      const old = $('pdeEditConfirmModal');
+      if(old) old.remove();
+      const wrap = document.createElement('div');
+      wrap.id = 'pdeEditConfirmModal';
+      wrap.className = 'pde-edit-modal-backdrop';
+      wrap.innerHTML = `
+        <div class="pde-edit-modal" role="dialog" aria-modal="true" aria-labelledby="pdeEditConfirmTitle">
+          <h3 id="pdeEditConfirmTitle">Confirm ${label} update</h3>
+          <p>You are about to update a saved ${label}. This will replace the existing saved record with the changes currently in the form.</p>
+          <div class="pde-edit-modal-actions">
+            <button type="button" class="btn secondary" id="pdeEditCancelBtn">Cancel</button>
+            <button type="button" class="btn primary" id="pdeEditConfirmBtn">Confirm Update</button>
+          </div>
+        </div>`;
+      document.body.appendChild(wrap);
+      function close(value){ wrap.remove(); resolve(value); }
+      $('pdeEditCancelBtn').onclick = () => close(false);
+      $('pdeEditConfirmBtn').onclick = () => close(true);
+      wrap.addEventListener('click', e=>{ if(e.target === wrap) close(false); });
+      document.addEventListener('keydown', function esc(e){ if(e.key === 'Escape'){ document.removeEventListener('keydown',esc); close(false); } });
+      $('pdeEditConfirmBtn')?.focus();
+    });
+  }
+
+  function showUndoToast(label, previousState){
+    injectEditUiStyle();
+    const old = $('pdeUndoToast');
+    if(old) old.remove();
+    const toast = document.createElement('div');
+    toast.id = 'pdeUndoToast';
+    toast.className = 'pde-undo-toast';
+    toast.innerHTML = `<div><strong>${label} updated.</strong><span>You have 10 seconds to undo this edit.</span></div><button type="button" id="pdeUndoBtn">Undo</button><div class="pde-undo-timer"><i></i></div>`;
+    document.body.appendChild(toast);
+    let active = true;
+    const timer = setTimeout(()=>{ active=false; toast.remove(); },10000);
+    $('pdeUndoBtn').onclick = () => {
+      if(!active) return;
+      clearTimeout(timer);
+      localStorage.setItem(APP_KEY, JSON.stringify(previousState));
+      toast.innerHTML = '<div><strong>Edit undone.</strong><span>Restoring the previous saved data...</span></div>';
+      setTimeout(()=>location.reload(),350);
+    };
+  }
+
+  const pendingUndo = {};
+  function attachConfirmUndo(formId,label){
+    const form = $(formId); if(!form || form.dataset.confirmUndoReady === 'true') return;
+    form.dataset.confirmUndoReady = 'true';
+    form.addEventListener('submit', e=>{
+      const isEditing = form.dataset.editing === 'true' && !!form.elements.id?.value;
+      if(!isEditing) return;
+
+      if(form.dataset.editConfirmed === 'true'){
+        delete form.dataset.editConfirmed;
+        const snap = pendingUndo[formId];
+        delete pendingUndo[formId];
+        if(snap) setTimeout(()=>showUndoToast(label,snap),550);
+        return;
+      }
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const snapshot = readState();
+      showConfirmModal(label).then(ok=>{
+        if(!ok) return;
+        pendingUndo[formId] = snapshot;
+        form.dataset.editConfirmed = 'true';
+        if(typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+      });
+    },true);
+  }
 
   function ensureCancelButton(formId, clearFn, label){
     const form=$(formId); if(!form) return;
@@ -119,8 +217,11 @@
 
   function setup(){
     normalizeIds();
+    injectEditUiStyle();
     ensureCancelButton('costForm',()=>{ if(typeof window.newCost==='function') window.newCost(); hideNotice('costForm'); },'Job Cost');
     ensureCancelButton('invoiceForm',()=>{ if(typeof window.newInvoice==='function') window.newInvoice(); hideNotice('invoiceForm'); },'Invoice');
+    attachConfirmUndo('costForm','Job Cost');
+    attachConfirmUndo('invoiceForm','Invoice');
     window.editCost = editCostDirect;
     window.editInvoice = editInvoiceDirect;
     const costForm=$('costForm'); if(costForm) costForm.addEventListener('submit',()=>setTimeout(()=>{setMode('costForm',false,'Job Cost'); hideNotice('costForm'); clearDraft('costForm');},300),true);
