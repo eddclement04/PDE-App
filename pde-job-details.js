@@ -121,7 +121,7 @@
     renderJobCostDetails();
     setInterval(renderJobCostDetails,3000);
     loadScriptOnce('pdeEditEnhanceScript','pde-edit-enhance.js?v=2');
-    loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=1');
+    loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=3');
   });
   window.addEventListener('storage',renderJobCostDetails);
   document.addEventListener('submit',()=>setTimeout(renderJobCostDetails,500),true);
