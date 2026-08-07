@@ -1,4 +1,4 @@
-// PDE app patch: dashboard job cost category totals + edit helper loader
+// PDE app patch: dashboard job cost category totals + edit/helper loaders
 (function(){
   const APP_KEY = 'pde_project_invoice_app_v1';
   const money = n => new Intl.NumberFormat('en-LC',{style:'currency',currency:'XCD'}).format(Number(n||0));
@@ -41,6 +41,14 @@
     style.id = 'pdeLocalLogoStyle';
     style.textContent = ".brand-mark{background-image:url('logo.png')!important;}";
     document.head.appendChild(style);
+  }
+
+  function loadScriptOnce(id,src){
+    if(document.getElementById(id)) return;
+    const s=document.createElement('script');
+    s.id=id;
+    s.src=src;
+    document.body.appendChild(s);
   }
 
   function renderJobCostDetails(){
@@ -112,9 +120,8 @@
     useLocalLogo();
     renderJobCostDetails();
     setInterval(renderJobCostDetails,3000);
-    const s=document.createElement('script');
-    s.src='pde-edit-enhance.js?v=1';
-    document.body.appendChild(s);
+    loadScriptOnce('pdeEditEnhanceScript','pde-edit-enhance.js?v=2');
+    loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=1');
   });
   window.addEventListener('storage',renderJobCostDetails);
   document.addEventListener('submit',()=>setTimeout(renderJobCostDetails,500),true);
