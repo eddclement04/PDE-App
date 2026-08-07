@@ -1,4 +1,4 @@
-// PDE quick add client/project buttons and dropdown options for Job Costs
+// PDE quick add client/project dropdown options for Job Costs only
 (function(){
   const ADD_CLIENT_VALUE = '__pde_add_new_client__';
   const ADD_PROJECT_VALUE = '__pde_add_new_project__';
@@ -12,8 +12,6 @@
     const style = document.createElement('style');
     style.id = 'pdeQuickAddStyle';
     style.textContent = `
-      .pde-quick-add-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
-      .pde-quick-add-row .btn{padding:9px 12px;font-size:11px;}
       .pde-quick-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9998;display:grid;place-items:center;padding:18px;}
       .pde-quick-modal{width:min(620px,100%);background:#fff;border:1px solid #dbe5f4;border-radius:22px;box-shadow:0 28px 80px rgba(15,23,42,.22);padding:26px;}
       .pde-quick-modal h3{margin:0 0 8px;color:#111a33;font-size:24px;font-weight:950;letter-spacing:-.03em;}
@@ -41,14 +39,21 @@
   function isSpecialOption(value){ return value === ADD_CLIENT_VALUE || value === ADD_PROJECT_VALUE; }
 
   function ensureDropdownOption(select, value, label){
-    if(!select || select.querySelector(`option[value="${value}"]`)) return;
+    if(!select) return;
+    const existing = select.querySelector(`option[value="${value}"]`);
+    if(existing){ existing.textContent = label; return; }
     const opt = document.createElement('option');
     opt.value = value;
     opt.textContent = label;
     select.appendChild(opt);
   }
 
+  function removeOldButtons(){
+    document.querySelectorAll('.pde-quick-add-row').forEach(row=>row.remove());
+  }
+
   function addDropdownOptions(){
+    removeOldButtons();
     ensureDropdownOption($('costClientSelect'), ADD_CLIENT_VALUE, '+ Add New Client');
     ensureDropdownOption($('costProjectSelect'), ADD_PROJECT_VALUE, '+ Add New Project');
   }
@@ -58,14 +63,16 @@
     if(!src) return '<option value="">No client selected</option>';
     return [...src.options]
       .filter(o=>!isSpecialOption(o.value))
-      .map(o=>`<option value="${esc(o.value)}" ${o.value===selected?'selected':''}>${esc(o.textContent)}</option>`).join('');
+      .map(o=>`<option value="${esc(o.value)}" ${o.value===selected?'selected':''}>${esc(o.textContent)}</option>`)
+      .join('');
   }
 
   function closeModal(){ $('pdeQuickModal')?.remove(); }
 
-  function openClientModal(){
+  function openClientModal(previousValue=''){
     injectStyle();
     addDropdownOptions();
+    if($('costClientSelect')) $('costClientSelect').value = previousValue || '';
     closeModal();
     const wrap = document.createElement('div');
     wrap.id = 'pdeQuickModal';
@@ -102,10 +109,12 @@
       if(main.elements.district) main.elements.district.value = q.elements.district.value;
       if(main.elements.country) main.elements.country.value = q.elements.country.value;
       if(main.elements.postalAddress) main.elements.postalAddress.value = q.elements.postalAddress.value;
+
       const phoneBox = $('clientPhones');
       const emailBox = $('clientEmails');
       if(phoneBox){ phoneBox.innerHTML = `<div class="multi-row"><input type="tel" value="${esc(q.elements.phone.value)}"><button type="button" class="btn danger">−</button></div>`; }
       if(emailBox){ emailBox.innerHTML = `<div class="multi-row"><input type="email" value="${esc(q.elements.email.value)}"><button type="button" class="btn danger">−</button></div>`; }
+
       main.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
       setTimeout(()=>{
         addDropdownOptions();
@@ -113,13 +122,14 @@
         if(sel) sel.value = id;
         closeModal();
         toast('Client added and selected.');
-      },160);
+      },150);
     };
   }
 
-  function openProjectModal(){
+  function openProjectModal(previousValue=''){
     injectStyle();
     addDropdownOptions();
+    if($('costProjectSelect')) $('costProjectSelect').value = previousValue || '';
     closeModal();
     const selectedClient = $('costClientSelect')?.value || '';
     const wrap = document.createElement('div');
@@ -160,6 +170,7 @@
       if(main.elements.siteDistrict) main.elements.siteDistrict.value = q.elements.siteDistrict.value;
       if(main.elements.siteCountry) main.elements.siteCountry.value = q.elements.siteCountry.value;
       if(main.elements.notes) main.elements.notes.value = q.elements.notes.value;
+
       main.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
       setTimeout(()=>{
         addDropdownOptions();
@@ -169,54 +180,36 @@
         if(csel && q.elements.clientId.value) csel.value = q.elements.clientId.value;
         closeModal();
         toast('Project added and selected.');
-      },160);
+      },150);
     };
   }
 
-  function addButtons(){
+  function setup(){
     injectStyle();
+    removeOldButtons();
     addDropdownOptions();
-    const clientSelect = $('costClientSelect');
-    const projectSelect = $('costProjectSelect');
-    if(clientSelect && !clientSelect.closest('label')?.querySelector('[data-quick-add-client]')){
-      const row = document.createElement('div');
-      row.className = 'pde-quick-add-row';
-      row.innerHTML = '<button type="button" class="btn small secondary" data-quick-add-client>+ Add New Client</button>';
-      clientSelect.closest('label')?.appendChild(row);
-      row.querySelector('[data-quick-add-client]').onclick = openClientModal;
-    }
-    if(projectSelect && !projectSelect.closest('label')?.querySelector('[data-quick-add-project]')){
-      const row = document.createElement('div');
-      row.className = 'pde-quick-add-row';
-      row.innerHTML = '<button type="button" class="btn small secondary" data-quick-add-project>+ Add New Project</button>';
-      projectSelect.closest('label')?.appendChild(row);
-      row.querySelector('[data-quick-add-project]').onclick = openProjectModal;
-    }
+
+    document.addEventListener('change', e=>{
+      const target = e.target;
+      if(target && target.id === 'costClientSelect' && target.value === ADD_CLIENT_VALUE){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        openClientModal('');
+      }
+      if(target && target.id === 'costProjectSelect' && target.value === ADD_PROJECT_VALUE){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        openProjectModal('');
+      }
+    }, true);
+
+    const obs = new MutationObserver(()=>addDropdownOptions());
+    const client = $('costClientSelect');
+    const project = $('costProjectSelect');
+    if(client) obs.observe(client,{childList:true});
+    if(project) obs.observe(project,{childList:true});
+    setInterval(addDropdownOptions,1500);
   }
 
-  function handleDropdownChange(e){
-    const target = e.target;
-    if(!target) return;
-    if(target.id === 'costClientSelect' && target.value === ADD_CLIENT_VALUE){
-      target.value = '';
-      openClientModal();
-    }
-    if(target.id === 'costProjectSelect' && target.value === ADD_PROJECT_VALUE){
-      target.value = '';
-      openProjectModal();
-    }
-  }
-
-  function start(){
-    addButtons();
-    document.addEventListener('change', handleDropdownChange, true);
-    setInterval(addDropdownOptions, 1000);
-    document.addEventListener('submit',()=>setTimeout(addButtons,200),true);
-    window.addEventListener('storage',()=>setTimeout(addButtons,200));
-  }
-
-  window.pdeOpenQuickClient = openClientModal;
-  window.pdeOpenQuickProject = openProjectModal;
-
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start); else start();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',setup); else setup();
 })();
