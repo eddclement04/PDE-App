@@ -123,7 +123,7 @@
     loadScriptOnce('pdeEditEnhanceScript','pde-edit-enhance.js?v=5');
     loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=4');
     loadScriptOnce('pdeHamburgerMenuScript','pde-hamburger-menu.js?v=2');
-    loadScriptOnce('pdeQuickAddScript','pde-quick-add.js?v=2');
+    loadScriptOnce('pdeQuickAddScript','pde-quick-add.js?v=3');
   });
   window.addEventListener('storage',renderJobCostDetails);
   document.addEventListener('submit',()=>setTimeout(renderJobCostDetails,500),true);
