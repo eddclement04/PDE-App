@@ -35,6 +35,14 @@
     return CAT_ORDER.filter(cat=>totals[cat]).map(cat=>({label:CAT_LABEL[cat] || cat,total:totals[cat]}));
   }
 
+  function useLocalLogo(){
+    if(document.getElementById('pdeLocalLogoStyle')) return;
+    const style = document.createElement('style');
+    style.id = 'pdeLocalLogoStyle';
+    style.textContent = ".brand-mark{background-image:url('logo.png')!important;}";
+    document.head.appendChild(style);
+  }
+
   function renderJobCostDetails(){
     const dashboard = document.getElementById('dashboard');
     if(!dashboard) return;
@@ -101,6 +109,7 @@
   }
 
   window.addEventListener('load',()=>{
+    useLocalLogo();
     renderJobCostDetails();
     setInterval(renderJobCostDetails,3000);
     const s=document.createElement('script');
