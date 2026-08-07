@@ -1,4 +1,4 @@
-// PDE hamburger menu for navigation headings
+// PDE hamburger menu for navigation headings + logo display fix
 (function(){
   function $(id){return document.getElementById(id);}
 
@@ -7,6 +7,28 @@
     const style=document.createElement('style');
     style.id='pdeHamburgerStyle';
     style.textContent=`
+      .brand-mark.pde-logo-img-wrap{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        width:118px!important;
+        height:80px!important;
+        flex:0 0 118px!important;
+        background:none!important;
+        color:transparent!important;
+        font-size:0!important;
+        line-height:0!important;
+        overflow:visible!important;
+      }
+      .brand-mark.pde-logo-img-wrap:before,
+      .brand-mark.pde-logo-img-wrap:after{display:none!important;content:none!important;}
+      .brand-mark.pde-logo-img-wrap img{
+        display:block!important;
+        width:118px!important;
+        height:80px!important;
+        object-fit:contain!important;
+        object-position:center!important;
+      }
       .pde-menu-toggle{
         display:none;
         align-items:center;
@@ -46,6 +68,8 @@
           gap:14px!important;
         }
         .brand{justify-self:start!important;}
+        .brand-mark.pde-logo-img-wrap{width:108px!important;height:74px!important;flex-basis:108px!important;}
+        .brand-mark.pde-logo-img-wrap img{width:108px!important;height:74px!important;}
         .pde-menu-toggle{display:inline-flex;justify-self:end;}
         .sidebar .nav{
           grid-column:1/-1;
@@ -81,16 +105,34 @@
       @media(max-width:760px){
         .pde-menu-open .sidebar .nav{grid-template-columns:1fr;}
         .brand h1,.brand p{display:none;}
+        .brand-mark.pde-logo-img-wrap{width:96px!important;height:66px!important;flex-basis:96px!important;}
+        .brand-mark.pde-logo-img-wrap img{width:96px!important;height:66px!important;}
       }
     `;
     document.head.appendChild(style);
   }
 
+  function fixLogo(){
+    const mark=document.querySelector('.brand-mark');
+    if(!mark) return;
+    mark.classList.add('pde-logo-img-wrap');
+    if(mark.querySelector('img')) return;
+    mark.textContent='';
+    mark.style.background='none';
+    const img=document.createElement('img');
+    img.src='logo.png?v=2';
+    img.alt='Perspective Designs & Estimates Logo';
+    img.loading='eager';
+    mark.appendChild(img);
+  }
+
   function setupMenu(){
     const sidebar=document.querySelector('.sidebar');
     const nav=document.querySelector('.sidebar .nav');
-    if(!sidebar || !nav || $('pdeMenuToggle')) return;
+    if(!sidebar || !nav) return;
     injectStyle();
+    fixLogo();
+    if($('pdeMenuToggle')) return;
     const btn=document.createElement('button');
     btn.type='button';
     btn.id='pdeMenuToggle';
