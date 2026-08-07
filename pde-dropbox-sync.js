@@ -1,12 +1,13 @@
 // PDE Dropbox sync for one shared App Folder data file
 (function(){
-  const DBX_APP_KEY = 'xdow5zgkghcpma0';
+  const DBX_APP_KEY = 'ovh91cidwdhh7i3';
   const REDIRECT_URI = 'https://eddclement04.github.io/PDE-App/';
   const PDE_DATA_KEY = 'pde_project_invoice_app_v1';
   const DBX_AUTH_KEY = 'pde_dropbox_auth_v1';
   const DBX_VERIFIER_KEY = 'pde_dropbox_pkce_v1';
   const DBX_FILE_PATH = '/pde-data.json';
-  const DBX_DISPLAY_PATH = '/Apps/PDE APP/pde-data.json';
+  const DBX_DISPLAY_PATH = '/Apps/PDE-App/pde-data.json';
+  const DBX_SCOPES = 'account_info.read files.content.read files.content.write';
 
   function $(id){ return document.getElementById(id); }
   function readAppData(){ try{return JSON.parse(localStorage.getItem(PDE_DATA_KEY)) || {}}catch(e){return {}} }
@@ -27,6 +28,7 @@
   function makeVerifier(){ const a=new Uint8Array(64); crypto.getRandomValues(a); return b64url(a); }
 
   async function connectDropbox(){
+    clearAuth();
     const verifier = makeVerifier();
     localStorage.setItem(DBX_VERIFIER_KEY, verifier);
     const challenge = await sha256(verifier);
@@ -34,6 +36,8 @@
     url.searchParams.set('client_id', DBX_APP_KEY);
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('redirect_uri', REDIRECT_URI);
+    url.searchParams.set('token_access_type', 'offline');
+    url.searchParams.set('scope', DBX_SCOPES);
     url.searchParams.set('code_challenge', challenge);
     url.searchParams.set('code_challenge_method', 'S256');
     location.href = url.toString();
@@ -52,7 +56,7 @@
     if(!res.ok) throw new Error(await res.text());
     const data = await res.json();
     data.saved_at = Date.now();
-    data.expires_at = Date.now() + Number(data.expires_in || 14400) * 1000;
+    data.expires_at = Date.now() + Number(data.expires_in || 14400) * 1000 - 60000;
     saveAuth(data);
     localStorage.removeItem(DBX_VERIFIER_KEY);
     history.replaceState({}, document.title, REDIRECT_URI);
@@ -60,17 +64,29 @@
     updateButtons();
   }
 
-  function bearer(){
-    const data = auth();
+  async function bearer(){
+    let data = auth();
     if(!data || !data.access_token) throw new Error('Dropbox is not connected.');
+    if(data.expires_at && Date.now() > data.expires_at && data.refresh_token){
+      const body = new URLSearchParams();
+      body.set('grant_type','refresh_token');
+      body.set('refresh_token',data.refresh_token);
+      body.set('client_id',DBX_APP_KEY);
+      const res = await fetch('https://api.dropboxapi.com/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+      if(!res.ok) throw new Error(await res.text());
+      const fresh = await res.json();
+      data = {...data,...fresh,saved_at:Date.now(),expires_at:Date.now()+Number(fresh.expires_in||14400)*1000-60000};
+      saveAuth(data);
+    }
     return data.access_token;
   }
 
   async function uploadText(path, text){
+    const token = await bearer();
     const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
       method:'POST',
       headers:{
-        'Authorization':'Bearer '+bearer(),
+        'Authorization':'Bearer '+token,
         'Content-Type':'application/octet-stream',
         'Dropbox-API-Arg':JSON.stringify({path, mode:'overwrite', autorename:false, mute:true, strict_conflict:false})
       },
@@ -81,9 +97,10 @@
   }
 
   async function downloadText(path){
+    const token = await bearer();
     const res = await fetch('https://content.dropboxapi.com/2/files/download', {
       method:'POST',
-      headers:{'Authorization':'Bearer '+bearer(), 'Dropbox-API-Arg':JSON.stringify({path})}
+      headers:{'Authorization':'Bearer '+token, 'Dropbox-API-Arg':JSON.stringify({path})}
     });
     if(res.status === 409) return null;
     if(!res.ok) throw new Error(await res.text());
