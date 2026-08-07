@@ -17,6 +17,22 @@
   function clearAuth(){ localStorage.removeItem(DBX_AUTH_KEY); localStorage.removeItem(DBX_VERIFIER_KEY); setStatus('Dropbox disconnected.'); updateButtons(); }
   function setStatus(text){ const el=$('dropboxStatus'); if(el) el.textContent=text; }
 
+  function friendlyDropboxError(err){
+    const msg = String(err && err.message ? err.message : err || '');
+    if(msg.includes('missing_scope')){
+      localStorage.removeItem(DBX_AUTH_KEY);
+      localStorage.removeItem(DBX_VERIFIER_KEY);
+      updateButtons();
+      return 'Dropbox needs a new permission approval. Click Connect Dropbox again, approve access, then retry Save or Load.';
+    }
+    if(msg.includes('expired_access_token') || msg.includes('invalid_access_token')){
+      localStorage.removeItem(DBX_AUTH_KEY);
+      updateButtons();
+      return 'Dropbox connection expired. Click Connect Dropbox again.';
+    }
+    return msg || 'Dropbox action failed.';
+  }
+
   function b64url(bytes){
     let s=''; bytes.forEach(b=>s+=String.fromCharCode(b));
     return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -114,7 +130,7 @@
       data._dropboxSavedAt = new Date().toISOString();
       await uploadText(DBX_FILE_PATH, JSON.stringify(data,null,2));
       setStatus('Saved to Dropbox: '+DBX_DISPLAY_PATH);
-    }catch(err){ setStatus('Dropbox save failed.'); alert(err.message); }
+    }catch(err){ const msg=friendlyDropboxError(err); setStatus(msg); alert(msg); }
   }
 
   async function loadFromDropbox(){
@@ -128,7 +144,7 @@
       writeAppData(data);
       setStatus('Loaded from Dropbox. Refreshing...');
       setTimeout(()=>location.reload(),600);
-    }catch(err){ setStatus('Dropbox load failed.'); alert(err.message); }
+    }catch(err){ const msg=friendlyDropboxError(err); setStatus(msg); alert(msg); }
   }
 
   function updateButtons(){
@@ -158,7 +174,7 @@
     const code = url.searchParams.get('code');
     if(!code) return;
     try{ await finishConnect(code); }
-    catch(err){ setStatus('Dropbox connection failed.'); alert(err.message); }
+    catch(err){ const msg=friendlyDropboxError(err); setStatus('Dropbox connection failed. '+msg); alert(msg); }
   }
 
   function start(){ injectPanel(); handleRedirect(); }
