@@ -1,10 +1,12 @@
-// PDE Dropbox sync for one shared App Folder data file
+// PDE Dropbox sync for one shared App Folder data file + topbar status
 (function(){
   const DBX_APP_KEY = 'ovh91cidwdhh7i3';
   const REDIRECT_URI = 'https://eddclement04.github.io/PDE-App/';
   const PDE_DATA_KEY = 'pde_project_invoice_app_v1';
   const DBX_AUTH_KEY = 'pde_dropbox_auth_v1';
   const DBX_VERIFIER_KEY = 'pde_dropbox_pkce_v1';
+  const DBX_LAST_SYNC_KEY = 'pde_dropbox_last_sync_v1';
+  const DBX_LAST_ACTION_KEY = 'pde_dropbox_last_action_v1';
   const DBX_FILE_PATH = '/pde-data.json';
   const DBX_DISPLAY_PATH = '/Apps/PDE-App/pde-data.json';
   const DBX_SCOPES = 'account_info.read files.content.read files.content.write';
@@ -14,8 +16,71 @@
   function writeAppData(data){ localStorage.setItem(PDE_DATA_KEY, JSON.stringify(data)); }
   function auth(){ try{return JSON.parse(localStorage.getItem(DBX_AUTH_KEY)) || null}catch(e){return null} }
   function saveAuth(data){ localStorage.setItem(DBX_AUTH_KEY, JSON.stringify(data)); }
-  function clearAuth(){ localStorage.removeItem(DBX_AUTH_KEY); localStorage.removeItem(DBX_VERIFIER_KEY); setStatus('Dropbox disconnected.'); updateButtons(); }
-  function setStatus(text){ const el=$('dropboxStatus'); if(el) el.textContent=text; }
+  function lastSync(){ return localStorage.getItem(DBX_LAST_SYNC_KEY) || ''; }
+  function lastAction(){ return localStorage.getItem(DBX_LAST_ACTION_KEY) || ''; }
+  function setLastSync(action){ localStorage.setItem(DBX_LAST_SYNC_KEY, new Date().toISOString()); localStorage.setItem(DBX_LAST_ACTION_KEY, action || 'Synced'); updateTopStatus(); }
+
+  function clearAuth(){
+    localStorage.removeItem(DBX_AUTH_KEY);
+    localStorage.removeItem(DBX_VERIFIER_KEY);
+    setStatus('Dropbox disconnected.');
+    updateButtons();
+    updateTopStatus();
+  }
+
+  function setStatus(text){
+    const el=$('dropboxStatus');
+    if(el) el.textContent=text;
+    updateTopStatus(text);
+  }
+
+  function syncText(){
+    const connected = !!auth();
+    const stamp = lastSync();
+    if(!connected) return {label:'Dropbox: Not connected',detail:'Click to open Dropbox Sync settings.',state:'off'};
+    if(stamp){
+      const d = new Date(stamp);
+      const action = lastAction() || 'Synced';
+      return {label:'Dropbox: Synced',detail:action+' '+d.toLocaleString(),state:'on'};
+    }
+    return {label:'Dropbox: Connected',detail:'Connected. Save or load data from Dropbox.',state:'on'};
+  }
+
+  function injectTopStatus(){
+    if($('dropboxTopStatusBtn')) return;
+    const actions = document.querySelector('.topbar-actions');
+    if(!actions) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'dropboxTopStatusBtn';
+    btn.className = 'btn secondary dropbox-status-btn';
+    btn.onclick = function(){
+      const nav = document.querySelector('.nav-btn[data-view="settings"]');
+      if(nav) nav.click();
+      setTimeout(function(){ const panel=$('dropboxSyncPanel'); if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'}); },150);
+    };
+    actions.insertBefore(btn, actions.firstChild);
+
+    if(!$('dropboxStatusStyle')){
+      const style = document.createElement('style');
+      style.id = 'dropboxStatusStyle';
+      style.textContent = '.dropbox-status-btn{display:inline-flex;align-items:center;gap:8px}.dropbox-status-btn:before{content:"";width:9px;height:9px;border-radius:50%;background:#94a3b8;display:inline-block}.dropbox-status-btn.is-on:before{background:#16a34a}.dropbox-status-btn.is-working:before{background:#f59e0b}.dropbox-status-btn.is-off:before{background:#94a3b8}.dropbox-status-btn small{display:block;font-size:10px;font-weight:800;text-transform:none;letter-spacing:0;color:inherit;opacity:.75;margin-top:2px}@media(max-width:760px){.dropbox-status-btn{width:100%;justify-content:center}}';
+      document.head.appendChild(style);
+    }
+    updateTopStatus();
+  }
+
+  function updateTopStatus(override){
+    const btn = $('dropboxTopStatusBtn');
+    if(!btn) return;
+    const info = syncText();
+    let detail = override || info.detail;
+    if(detail && detail.length > 42) detail = detail.slice(0,39)+'...';
+    btn.classList.remove('is-on','is-off','is-working');
+    btn.classList.add(override && /saving|loading|connecting/i.test(override) ? 'is-working' : 'is-'+info.state);
+    btn.innerHTML = '<span>'+info.label+'<small>'+detail+'</small></span>';
+    btn.title = override || info.detail;
+  }
 
   function friendlyDropboxError(err){
     const msg = String(err && err.message ? err.message : err || '');
@@ -23,11 +88,13 @@
       localStorage.removeItem(DBX_AUTH_KEY);
       localStorage.removeItem(DBX_VERIFIER_KEY);
       updateButtons();
+      updateTopStatus('Reconnect needed. Missing Dropbox permission.');
       return 'Dropbox needs a new permission approval. Click Connect Dropbox again, approve access, then retry Save or Load.';
     }
     if(msg.includes('expired_access_token') || msg.includes('invalid_access_token')){
       localStorage.removeItem(DBX_AUTH_KEY);
       updateButtons();
+      updateTopStatus('Reconnect needed. Dropbox token expired.');
       return 'Dropbox connection expired. Click Connect Dropbox again.';
     }
     return msg || 'Dropbox action failed.';
@@ -37,14 +104,17 @@
     let s=''; bytes.forEach(b=>s+=String.fromCharCode(b));
     return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   }
+
   async function sha256(text){
     const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     return b64url(new Uint8Array(hash));
   }
+
   function makeVerifier(){ const a=new Uint8Array(64); crypto.getRandomValues(a); return b64url(a); }
 
   async function connectDropbox(){
     clearAuth();
+    setStatus('Connecting to Dropbox...');
     const verifier = makeVerifier();
     localStorage.setItem(DBX_VERIFIER_KEY, verifier);
     const challenge = await sha256(verifier);
@@ -78,6 +148,7 @@
     history.replaceState({}, document.title, REDIRECT_URI);
     setStatus('Dropbox connected. Use Save To Dropbox or Load From Dropbox.');
     updateButtons();
+    updateTopStatus();
   }
 
   async function bearer(){
@@ -129,6 +200,7 @@
       const data = readAppData();
       data._dropboxSavedAt = new Date().toISOString();
       await uploadText(DBX_FILE_PATH, JSON.stringify(data,null,2));
+      setLastSync('Saved to Dropbox');
       setStatus('Saved to Dropbox: '+DBX_DISPLAY_PATH);
     }catch(err){ const msg=friendlyDropboxError(err); setStatus(msg); alert(msg); }
   }
@@ -142,6 +214,7 @@
       if(!confirm('Load data from Dropbox? This will replace the data currently saved in this browser.')){ setStatus('Load cancelled.'); return; }
       localStorage.setItem(PDE_DATA_KEY + '_backup_before_dropbox_' + Date.now(), localStorage.getItem(PDE_DATA_KEY) || '{}');
       writeAppData(data);
+      setLastSync('Loaded from Dropbox');
       setStatus('Loaded from Dropbox. Refreshing...');
       setTimeout(()=>location.reload(),600);
     }catch(err){ const msg=friendlyDropboxError(err); setStatus(msg); alert(msg); }
@@ -151,6 +224,7 @@
     const connected = !!auth();
     ['saveDropboxBtn','loadDropboxBtn','disconnectDropboxBtn'].forEach(id=>{ const b=$(id); if(b) b.disabled=!connected; });
     const c=$('connectDropboxBtn'); if(c) c.textContent = connected ? 'Reconnect Dropbox' : 'Connect Dropbox';
+    updateTopStatus();
   }
 
   function injectPanel(){
@@ -177,6 +251,6 @@
     catch(err){ const msg=friendlyDropboxError(err); setStatus('Dropbox connection failed. '+msg); alert(msg); }
   }
 
-  function start(){ injectPanel(); handleRedirect(); }
+  function start(){ injectTopStatus(); injectPanel(); updateButtons(); handleRedirect(); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
