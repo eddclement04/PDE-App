@@ -120,7 +120,7 @@
     useLocalLogo();
     renderJobCostDetails();
     setInterval(renderJobCostDetails,3000);
-    loadScriptOnce('pdeEditEnhanceScript','pde-edit-enhance.js?v=4');
+    loadScriptOnce('pdeEditEnhanceScript','pde-edit-enhance.js?v=5');
     loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=3');
     loadScriptOnce('pdeHamburgerMenuScript','pde-hamburger-menu.js?v=2');
   });
