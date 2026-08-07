@@ -6,6 +6,7 @@
   const DBX_AUTH_KEY = 'pde_dropbox_auth_v1';
   const DBX_VERIFIER_KEY = 'pde_dropbox_pkce_v1';
   const DBX_FILE_PATH = '/pde-data.json';
+  const DBX_DISPLAY_PATH = '/Apps/PDE APP/pde-data.json';
 
   function $(id){ return document.getElementById(id); }
   function readAppData(){ try{return JSON.parse(localStorage.getItem(PDE_DATA_KEY)) || {}}catch(e){return {}} }
@@ -95,7 +96,7 @@
       const data = readAppData();
       data._dropboxSavedAt = new Date().toISOString();
       await uploadText(DBX_FILE_PATH, JSON.stringify(data,null,2));
-      setStatus('Saved to Dropbox: /Apps/PDE-App/pde-data.json');
+      setStatus('Saved to Dropbox: '+DBX_DISPLAY_PATH);
     }catch(err){ setStatus('Dropbox save failed.'); alert(err.message); }
   }
 
@@ -126,7 +127,7 @@
     panel.id='dropboxSyncPanel';
     panel.className='panel';
     panel.style.marginTop='20px';
-    panel.innerHTML = '<div class="panel-header"><div><h3>Dropbox Sync</h3><p>Save and load the same PDE data file between your laptop and phone.</p></div></div><div class="backup-box"><button type="button" class="btn primary" id="connectDropboxBtn">Connect Dropbox</button><button type="button" class="btn" id="saveDropboxBtn">Save To Dropbox</button><button type="button" class="btn secondary" id="loadDropboxBtn">Load From Dropbox</button><button type="button" class="btn danger" id="disconnectDropboxBtn">Disconnect Dropbox</button></div><p class="muted" id="dropboxStatus">Dropbox not connected.</p><p class="muted">Dropbox file: <strong>/Apps/PDE-App/pde-data.json</strong></p>';
+    panel.innerHTML = '<div class="panel-header"><div><h3>Dropbox Sync</h3><p>Save and load the same PDE data file between your laptop and phone.</p></div></div><div class="backup-box"><button type="button" class="btn primary" id="connectDropboxBtn">Connect Dropbox</button><button type="button" class="btn" id="saveDropboxBtn">Save To Dropbox</button><button type="button" class="btn secondary" id="loadDropboxBtn">Load From Dropbox</button><button type="button" class="btn danger" id="disconnectDropboxBtn">Disconnect Dropbox</button></div><p class="muted" id="dropboxStatus">Dropbox not connected.</p><p class="muted">Dropbox file: <strong>'+DBX_DISPLAY_PATH+'</strong></p>';
     settings.appendChild(panel);
     $('connectDropboxBtn').onclick=connectDropbox;
     $('saveDropboxBtn').onclick=saveToDropbox;
