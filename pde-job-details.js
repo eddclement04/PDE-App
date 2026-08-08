@@ -39,7 +39,7 @@
     if(document.getElementById('pdeLocalLogoStyle')) return;
     const style = document.createElement('style');
     style.id = 'pdeLocalLogoStyle';
-    style.textContent = ".brand-mark{background-image:url('logo.png')!important;}";
+    style.textContent = ".brand-mark{background:none!important;background-image:none!important;}";
     document.head.appendChild(style);
   }
 
@@ -122,7 +122,7 @@
     setInterval(renderJobCostDetails,3000);
     loadScriptOnce('pdeEditEnhanceScript','pde-edit-enhance.js?v=5');
     loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=4');
-    loadScriptOnce('pdeHamburgerMenuScript','pde-hamburger-menu.js?v=2');
+    loadScriptOnce('pdeHamburgerMenuScript','pde-hamburger-menu.js?v=3');
     loadScriptOnce('pdeQuickAddScript','pde-quick-add.js?v=3');
   });
   window.addEventListener('storage',renderJobCostDetails);
