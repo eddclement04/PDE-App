@@ -1,4 +1,4 @@
-// PDE hamburger menu for navigation headings + logo display fix
+// PDE hamburger menu for navigation headings + clean header logo
 (function(){
   function $(id){return document.getElementById(id);}
 
@@ -9,25 +9,28 @@
     style.textContent=`
       .brand-mark.pde-logo-img-wrap{
         display:flex!important;
-        align-items:center!important;
+        align-items:flex-start!important;
         justify-content:center!important;
-        width:118px!important;
-        height:80px!important;
-        flex:0 0 118px!important;
+        width:128px!important;
+        height:58px!important;
+        flex:0 0 128px!important;
         background:none!important;
         color:transparent!important;
         font-size:0!important;
         line-height:0!important;
-        overflow:visible!important;
+        overflow:hidden!important;
+        border:0!important;
       }
       .brand-mark.pde-logo-img-wrap:before,
       .brand-mark.pde-logo-img-wrap:after{display:none!important;content:none!important;}
       .brand-mark.pde-logo-img-wrap img{
         display:block!important;
-        width:118px!important;
-        height:80px!important;
-        object-fit:contain!important;
-        object-position:center!important;
+        width:128px!important;
+        height:auto!important;
+        max-width:none!important;
+        object-fit:unset!important;
+        object-position:top center!important;
+        transform:none!important;
       }
       .pde-menu-toggle{
         display:none;
@@ -68,8 +71,8 @@
           gap:14px!important;
         }
         .brand{justify-self:start!important;}
-        .brand-mark.pde-logo-img-wrap{width:108px!important;height:74px!important;flex-basis:108px!important;}
-        .brand-mark.pde-logo-img-wrap img{width:108px!important;height:74px!important;}
+        .brand-mark.pde-logo-img-wrap{width:112px!important;height:52px!important;flex-basis:112px!important;}
+        .brand-mark.pde-logo-img-wrap img{width:112px!important;}
         .pde-menu-toggle{display:inline-flex;justify-self:end;}
         .sidebar .nav{
           grid-column:1/-1;
@@ -105,8 +108,8 @@
       @media(max-width:760px){
         .pde-menu-open .sidebar .nav{grid-template-columns:1fr;}
         .brand h1,.brand p{display:none;}
-        .brand-mark.pde-logo-img-wrap{width:96px!important;height:66px!important;flex-basis:96px!important;}
-        .brand-mark.pde-logo-img-wrap img{width:96px!important;height:66px!important;}
+        .brand-mark.pde-logo-img-wrap{width:106px!important;height:50px!important;flex-basis:106px!important;}
+        .brand-mark.pde-logo-img-wrap img{width:106px!important;}
       }
     `;
     document.head.appendChild(style);
@@ -116,14 +119,18 @@
     const mark=document.querySelector('.brand-mark');
     if(!mark) return;
     mark.classList.add('pde-logo-img-wrap');
-    if(mark.querySelector('img')) return;
     mark.textContent='';
     mark.style.background='none';
-    const img=document.createElement('img');
-    img.src='logo.png?v=2';
-    img.alt='Perspective Designs & Estimates Logo';
-    img.loading='eager';
-    mark.appendChild(img);
+    mark.style.backgroundImage='none';
+    mark.style.overflow='hidden';
+    let img=mark.querySelector('img');
+    if(!img){
+      img=document.createElement('img');
+      img.alt='Perspective Designs & Estimates Logo';
+      img.loading='eager';
+      mark.appendChild(img);
+    }
+    img.src='logo.png?v=4';
   }
 
   function setupMenu(){
