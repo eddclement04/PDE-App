@@ -124,6 +124,7 @@
     loadScriptOnce('pdeDropboxSyncScript','pde-dropbox-sync.js?v=4');
     loadScriptOnce('pdeHamburgerMenuScript','pde-hamburger-menu.js?v=3');
     loadScriptOnce('pdeQuickAddScript','pde-quick-add.js?v=3');
+    loadScriptOnce('pdeLineLayoutScript','pde-line-layout.js?v=1');
   });
   window.addEventListener('storage',renderJobCostDetails);
   document.addEventListener('submit',()=>setTimeout(renderJobCostDetails,500),true);
